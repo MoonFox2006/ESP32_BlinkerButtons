@@ -83,14 +83,11 @@ int8_t Buttons::add(uint8_t pin, bool level, bool pullup) {
       gpio_intr_enable((gpio_num_t)pin);
       if (gpio_get_level((gpio_num_t)pin) == level) { // Button already pressed
         uint32_t time = esp_timer_get_time() / 1000;
-        uint32_t t;
 
-        if (_lastISR)
-          t = time - _lastISR;
-        else
-          t = 0;
         portENTER_CRITICAL(&_mux);
-        if (t) {
+        if (_lastISR) {
+          uint32_t t = time - _lastISR;
+
           for (uint8_t i = 0; i < result; ++i) {
             if (_items[i].pressed) { // Button was pressed
               if (t + _items[i].duration >= 0x7FFF)
