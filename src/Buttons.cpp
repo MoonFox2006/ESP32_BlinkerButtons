@@ -157,8 +157,8 @@ int8_t Buttons::find(uint8_t pin) {
 }
 
 void IRAM_ATTR Buttons::buttonISR() {
-	SET_PERI_REG_MASK(GPIO_STATUS_W1TC_REG, READ_PERI_REG(GPIO_STATUS_REG)); // Clear interrupt status for GPIO0-31
-	SET_PERI_REG_MASK(GPIO_STATUS1_W1TC_REG, READ_PERI_REG(GPIO_STATUS1_REG)); // Clear interrupt status for GPIO32-39
+  SET_PERI_REG_MASK(GPIO_STATUS_W1TC_REG, READ_PERI_REG(GPIO_STATUS_REG)); // Clear interrupt status for GPIO0-31
+  SET_PERI_REG_MASK(GPIO_STATUS1_W1TC_REG, READ_PERI_REG(GPIO_STATUS1_REG)); // Clear interrupt status for GPIO32-39
   if (_valid) {
     portENTER_CRITICAL_ISR(&_mux);
     if (_count) {
