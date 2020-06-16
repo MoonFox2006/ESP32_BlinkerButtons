@@ -81,6 +81,46 @@ int8_t Buttons::add(uint8_t pin, bool level, bool pullup) {
       gpio_set_pull_mode((gpio_num_t)pin, pullup ? GPIO_PULLUP_ONLY : GPIO_FLOATING);
       gpio_set_intr_type((gpio_num_t)pin, GPIO_INTR_ANYEDGE);
       gpio_intr_enable((gpio_num_t)pin);
+      if (gpio_get_level((gpio_num_t)pin) == level) { // Button already pressed
+        uint32_t time = esp_timer_get_time() / 1000;
+        uint32_t t;
+
+        if (_lastISR)
+          t = time - _lastISR;
+        else
+          t = 0;
+        portENTER_CRITICAL(&_mux);
+        if (t) {
+          for (uint8_t i = 0; i < result; ++i) {
+            if (_items[i].pressed) { // Button was pressed
+              if (t + _items[i].duration >= 0x7FFF)
+                _items[i].duration = 0x7FFF;
+              else
+                _items[i].duration += t;
+            } else { // Button was released
+              if (_items[i].dbl) {
+                if (t >= _items[i].duration) {
+                  _items[i].dbl = false;
+                  _items[i].duration = 0;
+                } else {
+                  _items[i].duration -= t;
+                }
+              }
+            }
+          }
+        }
+        _items[result].pressed = true;
+        _lastISR = time;
+        portEXIT_CRITICAL(&_mux);
+        if (! _debounced) {
+          btnevent_t btnevent = {
+            .state = BTN_PRESSED,
+            .index = result
+          };
+
+          xQueueSend(eventQueue, &btnevent, 0);
+        }
+      }
     } else
       portEXIT_CRITICAL(&_mux);
   }
